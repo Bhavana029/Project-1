@@ -1,26 +1,25 @@
-"""Non-ORM user object for Django auth integration (data lives in MongoDB)."""
-from __future__ import annotations
 
+"""Non-ORM user object for Django authentication."""
 from django.contrib.auth.hashers import check_password
 
 
 class _MongoUserMeta:
-    """Lets django.contrib.auth.login store the user id in the session."""
+    """Provide the metadata needed by Django login."""
 
     class _Pk:
         @staticmethod
-        def value_to_string(user) -> str:
+        def value_to_string(user):
             return str(user.pk)
 
     pk = _Pk()
 
 
 class MongoUser:
-    """Minimal user interface compatible with Django templates and login_required."""
+    """Custom user object backed by MongoDB."""
 
     _meta = _MongoUserMeta()
 
-    def __init__(self, doc: dict):
+    def __init__(self, doc):
         self._doc = doc
         self.pk = str(doc["_id"])
         self.id = self.pk
@@ -32,21 +31,24 @@ class MongoUser:
         self.is_superuser = False
 
     @property
-    def is_authenticated(self) -> bool:
+    def is_authenticated(self):
         return True
 
     @property
-    def is_anonymous(self) -> bool:
+    def is_anonymous(self):
         return False
 
-    def check_password(self, raw_password: str) -> bool:
-        return check_password(raw_password, self._doc["password_hash"])
+    def check_password(self, raw_password):
+        return check_password(
+            raw_password,
+            self._doc["password_hash"],
+        )
 
-    def get_username(self) -> str:
+    def get_username(self):
         return self.email
 
     def save(self, *args, **kwargs):
-        """No-op: required so Django's user_logged_in signal does not crash."""
+        """No-op for Django login signal compatibility."""
 
-    def __str__(self) -> str:
+    def __str__(self):
         return self.email
