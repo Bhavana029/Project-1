@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }} — Expense Tracker{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>{{ page_title }}</h1>
+</div>
+<div class="card form-card">
+  <form method="post" novalidate id="transactionForm">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+    <div class="alert alert-error">{{ form.non_field_errors }}</div>
+    {% endif %}
+    <div class="form-row">
+      <div class="form-group">
+        <label for="id_title">Title</label>
+        {{ form.title }}
+        {% if form.title.errors %}<span class="field-error">{{ form.title.errors.0 }}</span>{% endif %}
+      </div>
+      <div class="form-group">
+        <label for="id_amount">Amount</label>
+        {{ form.amount }}
+        {% if form.amount.errors %}<span class="field-error">{{ form.amount.errors.0 }}</span>{% endif %}
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="id_type">Type</label>
+        {{ form.type }}
+      </div>
+      <div class="form-group">
+        <label for="id_category">Category</label>
+        <select name="category" id="id_category">
+          {% for c in form.fields.category.choices %}
+          <option value="{{ c.0 }}" {% if form.category.value == c.0 %}selected{% endif %}>{{ c.1 }}</option>
+          {% endfor %}
+        </select>
+        {% if form.category.errors %}<span class="field-error">{{ form.category.errors.0 }}</span>{% endif %}
+      </div>
+      <div class="form-group">
+        <label for="id_transaction_date">Date</label>
+        {{ form.transaction_date }}
+        {% if form.transaction_date.errors %}<span class="field-error">{{ form.transaction_date.errors.0 }}</span>{% endif %}
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="id_payment_method">Payment method</label>
+        {{ form.payment_method }}
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="id_notes">Notes</label>
+      {{ form.notes }}
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Save</button>
+      <a href="{% url 'expenses:transaction_list' %}" class="btn btn-ghost">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+  window.transactionCategories = {
+    income: {{ income_categories_json|safe }},
+    expense: {{ expense_categories_json|safe }}
+  };
+</script>
+{% endblock %}

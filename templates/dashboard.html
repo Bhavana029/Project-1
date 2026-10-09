@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Expense Tracker{% endblock %}
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Dashboard</h1>
+  <a href="{% url 'expenses:transaction_add' %}" class="btn btn-primary">Add transaction</a>
+</div>
+
+<div class="grid cards-4">
+  <div class="stat-card">
+    <span class="stat-label">Total income</span>
+    <span class="stat-value income">{{ summary_display.total_income }}</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Total expenses</span>
+    <span class="stat-value expense">{{ summary_display.total_expenses }}</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Current balance</span>
+    <span class="stat-value">{{ summary_display.balance }}</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">This month's expenses</span>
+    <span class="stat-value expense">{{ summary_display.month_expenses }}</span>
+  </div>
+</div>
+
+{% if budget.has_budget %}
+<div class="card budget-snippet">
+  <h2>Monthly budget</h2>
+  <div class="budget-meta">
+    <span>Spent: {{ budget_display.spent }} / {{ budget_display.monthly_limit }}</span>
+    <span>Remaining: {{ budget_display.remaining }}</span>
+  </div>
+  <div class="progress-bar {% if budget.warning_level == 'warning' %}progress-warning{% elif budget.warning_level == 'danger' %}progress-danger{% endif %}">
+    <div class="progress-fill" style="width: {% if budget.percent %}{{ budget.percent|floatformat:0 }}{% else %}0{% endif %}%;"></div>
+  </div>
+  {% if budget.warning_level == 'warning' %}
+  <p class="budget-alert warning">You have used 80% or more of your monthly budget.</p>
+  {% elif budget.warning_level == 'danger' %}
+  <p class="budget-alert danger">You have reached or exceeded your monthly budget.</p>
+  {% endif %}
+  <a href="{% url 'budgets:budget' %}">Manage budget</a>
+</div>
+{% else %}
+<div class="card">
+  <p>No budget set for this month. <a href="{% url 'budgets:budget' %}">Set a budget</a></p>
+</div>
+{% endif %}
+
+<div class="grid charts-2">
+  <div class="card">
+    <h2>Expense trend (this month)</h2>
+    {% if chart_labels %}
+    <canvas id="trendChart" height="200"></canvas>
+    {% else %}
+    <p class="empty-inline">No expenses recorded this month yet.</p>
+    {% endif %}
+  </div>
+  <div class="card">
+    <h2>Expenses by category</h2>
+    {% if cat_labels %}
+    <canvas id="categoryChart" height="200"></canvas>
+    {% else %}
+    <p class="empty-inline">No category data for this month.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header-row">
+    <h2>Recent transactions</h2>
+    <a href="{% url 'expenses:transaction_list' %}">View all</a>
+  </div>
+  {% if recent_transactions %}
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Title</th>
+          <th>Category</th>
+          <th>Type</th>
+          <th class="num">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tx in recent_transactions %}
+        <tr>
+          <td>{{ tx.transaction_date }}</td>
+          <td>{{ tx.title }}</td>
+          <td>{{ tx.category }}</td>
+          <td><span class="badge badge-{{ tx.type }}">{{ tx.type }}</span></td>
+          <td class="num">{{ tx.amount_display }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty-inline">You have no transactions yet. <a href="{% url 'expenses:transaction_add' %}">Add your first one</a>.</p>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.dashboardCharts = {
+    trend: { labels: {{ chart_labels_json|safe }}, values: {{ chart_values_json|safe }} },
+    category: { labels: {{ cat_labels_json|safe }}, values: {{ cat_values_json|safe }} }
+  };
+</script>
+{% endblock %}

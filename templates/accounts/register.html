@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Register — Expense Tracker{% endblock %}
+{% block content %}
+<div class="auth-card">
+  <h1>Create account</h1>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+    <div class="alert alert-error">{{ form.non_field_errors }}</div>
+    {% endif %}
+    {% for field in form %}
+    <div class="form-group">
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% if field.errors %}<span class="field-error">{{ field.errors.0 }}</span>{% endif %}
+    </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-primary btn-block">Create account</button>
+  </form>
+  <p class="auth-footer">Already registered? <a href="{% url 'accounts:login' %}">Sign in</a></p>
+</div>
+{% endblock %}

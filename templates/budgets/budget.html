@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Budget — Expense Tracker{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Monthly budget</h1>
+</div>
+
+<form method="get" class="month-picker card inline-form-row">
+  <label for="year">Month</label>
+  <input type="number" name="year" id="year" value="{{ year }}" min="2000" max="2100">
+  <input type="number" name="month" id="month" value="{{ month }}" min="1" max="12">
+  <button type="submit" class="btn btn-ghost btn-sm">Go</button>
+</form>
+
+<div class="card">
+  <h2>{{ year }}-{% if month < 10 %}0{% endif %}{{ month }}</h2>
+  {% if status.has_budget %}
+  <div class="budget-meta">
+    <span>Limit: {{ display.monthly_limit }}</span>
+    <span>Spent: {{ display.spent }}</span>
+    <span>Remaining: {{ display.remaining }}</span>
+  </div>
+  <div class="progress-bar {% if status.warning_level == 'warning' %}progress-warning{% elif status.warning_level == 'danger' %}progress-danger{% endif %}">
+    <div class="progress-fill" style="width: {% if status.percent %}{{ status.percent|floatformat:0 }}{% else %}0{% endif %}%;"></div>
+  </div>
+  {% if status.warning_level == 'warning' %}
+  <p class="budget-alert warning">Spending has reached 80% of your budget.</p>
+  {% elif status.warning_level == 'danger' %}
+  <p class="budget-alert danger">Spending has reached or exceeded your budget.</p>
+  {% endif %}
+  {% else %}
+  <p class="text-muted">No budget set for this month yet.</p>
+  {% endif %}
+</div>
+
+<div class="card form-card">
+  <h2>Set or update budget</h2>
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="year" value="{{ year }}">
+    <input type="hidden" name="month" value="{{ month }}">
+    <div class="form-group">
+      <label for="id_monthly_limit">{{ form.monthly_limit.label }}</label>
+      {{ form.monthly_limit }}
+      {% if form.monthly_limit.errors %}<span class="field-error">{{ form.monthly_limit.errors.0 }}</span>{% endif %}
+    </div>
+    <button type="submit" class="btn btn-primary">Save budget</button>
+  </form>
+</div>
+{% endblock %}

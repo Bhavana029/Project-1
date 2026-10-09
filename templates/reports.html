@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Reports — Expense Tracker{% endblock %}
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Reports</h1>
+  <a href="{% url 'reports_export_csv' %}?year={{ year }}&amp;month={{ month }}" class="btn btn-ghost">Download CSV</a>
+</div>
+
+<form method="get" class="month-picker card inline-form-row">
+  <label for="year">Month</label>
+  <input type="number" name="year" id="year" value="{{ year }}" min="2000" max="2100">
+  <input type="number" name="month" id="month" value="{{ month }}" min="1" max="12">
+  <button type="submit" class="btn btn-primary btn-sm">View</button>
+</form>
+
+<div class="grid cards-3">
+  <div class="stat-card">
+    <span class="stat-label">Income</span>
+    <span class="stat-value income">{{ report_display.income }}</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Expenses</span>
+    <span class="stat-value expense">{{ report_display.expenses }}</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Net balance</span>
+    <span class="stat-value">{{ report_display.net }}</span>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Expenses by category</h2>
+  {% if report.by_category %}
+  <canvas id="reportCategoryChart" height="220"></canvas>
+  <ul class="category-list">
+    {% for row in report.by_category %}
+    <li><span>{{ row.category }}</span><span>{{ row.total_display }}</span></li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="empty-inline">No expenses for this month.</p>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.reportCategory = {
+    labels: {{ cat_labels_json|safe }},
+    values: {{ cat_values_json|safe }}
+  };
+</script>
+{% endblock %}

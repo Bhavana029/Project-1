@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Service unavailable{% endblock %}
+{% block content %}
+<div class="card empty-state">
+  <h1>Database unavailable</h1>
+  <p>We could not reach MongoDB. Ensure MongoDB is running and <code>MONGODB_URI</code> in your <code>.env</code> is correct.</p>
+  <a href="{% url 'dashboard' %}" class="btn btn-primary">Try again</a>
+</div>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Expense Tracker{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  {% if user.is_authenticated %}
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="{% url 'dashboard' %}" class="logo">Expense Tracker</a>
+      <button type="button" class="nav-toggle" id="navToggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
+      <nav class="main-nav" id="mainNav">
+        <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a>
+        <a href="{% url 'expenses:transaction_list' %}">Transactions</a>
+        <a href="{% url 'expenses:transaction_add' %}">Add</a>
+        <a href="{% url 'budgets:budget' %}">Budget</a>
+        <a href="{% url 'reports' %}">Reports</a>
+      </nav>
+      <div class="header-user">
+        <span class="user-name">{{ user.first_name|default:user.email }}</span>
+        <form method="post" action="{% url 'accounts:logout' %}" class="logout-form">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-ghost btn-sm">Logout</button>
+        </form>
+      </div>
+    </div>
+  </header>
+  {% endif %}
+
+  <main class="{% if user.is_authenticated %}main-app{% else %}main-auth{% endif %}">
+    {% if messages %}
+    <div class="messages" role="status">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <script src="{% static 'js/app.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>
