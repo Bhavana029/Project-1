@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# Render build script — install deps, collect static files, migrate Django DB (PostgreSQL on Render).
+# Render build — dependencies and static files (no SQL migrations; auth is in MongoDB).
 set -o errexit
 
 pip install -r requirements.txt
 python manage.py collectstatic --noinput
-python manage.py migrate --noinput

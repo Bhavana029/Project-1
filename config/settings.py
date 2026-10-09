@@ -1,9 +1,10 @@
 """
 Django settings for Expense Tracker.
 
-Database split (documented):
-- Relational DB (SQLite locally, PostgreSQL on Render via DATABASE_URL): Django auth, sessions, admin.
-- MongoDB (PyMongo via expenses.mongo): transactions and budgets only.
+Persistent application data (users, transactions, budgets) is stored in MongoDB via PyMongo.
+Django's built-in SQL database is not used for users or sessions.
+Sessions use signed cookies (no session table). A minimal in-memory SQLite config satisfies
+Django internals only; it is not used for authentication data.
 """
 import os
 import sys
@@ -35,17 +36,25 @@ if not SECRET_KEY:
             "SECRET_KEY environment variable is required when DEBUG is False."
         )
 
+
 ALLOWED_HOSTS = [
     h.strip()
-    for h in os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+    for h in os.environ.get(
+        "ALLOWED_HOSTS",
+        "localhost,127.0.0.1,.vercel.app"
+    ).split(",")
     if h.strip()
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     o.strip()
-    for o in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",")
+    for o in os.environ.get(
+        "CSRF_TRUSTED_ORIGINS",
+        "https://*.vercel.app"
+    ).split(",")
     if o.strip()
 ]
+
 
 MONGODB_URI = os.environ.get("MONGODB_URI", "mongodb://localhost:27017")
 MONGODB_DB_NAME = os.environ.get("MONGODB_DB_NAME", "expense_tracker")
@@ -56,13 +65,12 @@ if not DEBUG and not os.environ.get("MONGODB_URI"):
     )
 
 INSTALLED_APPS = [
-    "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "accounts",
+    "accounts.apps.AccountsConfig",
     "expenses",
     "budgets",
 ]
@@ -97,23 +105,19 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-# --- Django relational database (auth / sessions) ---
-import dj_database_url
-
-_default_sqlite = f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
+# Not used for users/sessions; satisfies Django without persisting auth on disk.
 DATABASES = {
-    "default": dj_database_url.config(
-        default=_default_sqlite,
-        conn_max_age=600,
-        ssl_require=not DEBUG,
-    )
-}
-
-if "test" in sys.argv:
-    DATABASES["default"] = {
+    "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": ":memory:",
     }
+}
+
+AUTHENTICATION_BACKENDS = [
+    "accounts.backends.MongoDBBackend",
+]
+
+SESSION_ENGINE = "django.contrib.sessions.backends.signed_cookies"
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -153,7 +157,6 @@ LOGOUT_REDIRECT_URL = "accounts:login"
 
 TRANSACTIONS_PAGE_SIZE = 10
 
-# --- Production / Render HTTPS proxy ---
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SECURE_SSL_REDIRECT = False

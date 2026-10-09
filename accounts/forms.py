@@ -1,9 +1,9 @@
 from django import forms
-from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
-User = get_user_model()
+from accounts.services import email_exists
+from expenses.mongo import MongoConnectionError
 
 
 class RegistrationForm(forms.Form):
@@ -14,10 +14,13 @@ class RegistrationForm(forms.Form):
 
     def clean_email(self):
         email = self.cleaned_data["email"].strip().lower()
-        if User.objects.filter(email__iexact=email).exists():
-            raise ValidationError("An account with this email already exists.")
-        if User.objects.filter(username__iexact=email).exists():
-            raise ValidationError("An account with this email already exists.")
+        try:
+            if email_exists(email):
+                raise ValidationError("An account with this email already exists.")
+        except MongoConnectionError as exc:
+            raise ValidationError(
+                "Unable to verify email right now. Please try again."
+            ) from exc
         return email
 
     def clean(self):

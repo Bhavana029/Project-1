@@ -1,4 +1,4 @@
-"""MongoDB client and collection access for financial records."""
+"""MongoDB client and collection access (users, transactions, budgets)."""
 from __future__ import annotations
 
 import logging
@@ -50,6 +50,7 @@ def ensure_indexes() -> None:
         unique=True,
         name="user_id_year_month",
     )
+    db.users.create_index([("email", ASCENDING)], unique=True, name="email_unique")
     _indexes_ensured = True
 
 
